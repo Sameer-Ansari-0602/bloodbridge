@@ -9,11 +9,11 @@ import os
 def get_db():
     try:
         return mysql.connector.connect(
-            host=os.environ.get("MYSQL_HOST"),
+            host=os.environ.get("MYSQL_HOST", "localhost"),
             port=int(os.environ.get("MYSQL_PORT", 3306)),
-            user=os.environ.get("MYSQL_USER"),
-            password=os.environ.get("MYSQL_PASSWORD"),
-            database=os.environ.get("MYSQL_DATABASE"),
+            user=os.environ.get("MYSQL_USER", "root"),
+            password=os.environ.get("MYSQL_PASSWORD", "Sameer@123"),
+            database=os.environ.get("MYSQL_DATABASE", "bloodbridge_db"),
             connection_timeout=5
         )
     except Exception as e:
@@ -391,3 +391,7 @@ def internal_error(error):
 @app.errorhandler(404)
 def not_found_error(error):
     return jsonify({'error': 'Resource Not Found'}), 404
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

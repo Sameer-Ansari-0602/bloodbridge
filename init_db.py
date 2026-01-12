@@ -1,10 +1,10 @@
-import mysql.connector
+import os
 
 db_config = {
-    'host': 'localhost',
-    'user': 'root', 
-    'password': 'Sameer@123', 
-    'database': 'bloodbridge_db'
+    'host': os.environ.get("MYSQL_HOST", "localhost"),
+    'user': os.environ.get("MYSQL_USER", "root"),
+    'password': os.environ.get("MYSQL_PASSWORD", "Sameer@123"),
+    'database': os.environ.get("MYSQL_DATABASE", "bloodbridge_db")
 }
 
 def init_db():
