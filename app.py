@@ -4,33 +4,36 @@ from flask_bcrypt import Bcrypt
 from datetime import datetime
 import os
 
-try:
-    conn = mysql.connector.connect(
-        host=os.environ.get["MYSQL_HOST"],
-        port=int(os.environ.get["MYSQL_PORT"]),
-        user=os.environ.get["MYSQL_USER"],
-        password=os.environ.get["MYSQL_PASSWORD"],
-        database=os.environ.get["MYSQL_DATABASE"]
-    )
-    print("MySQL connection successful")
 
-except Exception as e:
-    print("MySQL connection failed:", e)
+
+def get_db():
+    try:
+        return mysql.connector.connect(
+            host=os.environ.get("MYSQL_HOST"),
+            port=int(os.environ.get("MYSQL_PORT", 3306)),
+            user=os.environ.get("MYSQL_USER"),
+            password=os.environ.get("MYSQL_PASSWORD"),
+            database=os.environ.get("MYSQL_DATABASE"),
+            connection_timeout=5
+        )
+    except Exception as e:
+        print("❌ MySQL connection failed:", e)
+        return None
 
 
 app = Flask(__name__)
 app.secret_key = 'bloodbridge_secure_key_999'
 bcrypt = Bcrypt(app)
 
-db_config = {
-    'host': 'localhost',
-    'user': 'root', 
-    'password': 'Sameer@123', 
-    'database': 'bloodbridge_db'
-}
+# db_config = {
+#     'host': 'localhost',
+#     'user': 'root', 
+#     'password': 'Sameer@123', 
+#     'database': 'bloodbridge_db'
+# }
 
-def get_db():
-    return mysql.connector.connect(**db_config)
+# def get_db():
+#     return mysql.connector.connect(**db_config)
 
 # --- VIEWS ---
 
@@ -39,6 +42,8 @@ def get_db():
 def inject_stats():
     try:
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor(dictionary=True)
         cursor.execute("SELECT COUNT(*) as count FROM users WHERE role = 'donor'")
         donors = cursor.fetchone()['count']
@@ -57,6 +62,8 @@ def inject_stats():
 def index():
     try:
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor(dictionary=True)
         
         cursor.execute("SELECT COUNT(*) as count FROM users WHERE role = 'donor'")
@@ -90,6 +97,8 @@ def login():
     email = request.form['email']
     password = request.form['password']
     db = get_db()
+    if not db:
+            raise Exception("Database connection failed")
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
@@ -120,6 +129,8 @@ def register():
     
     try:
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor()
         cursor.execute("INSERT INTO users (full_name, email, password_hash, blood_group, phone, city, role) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
                        (name, email, pw, bg, phone, city, role))
@@ -138,6 +149,8 @@ def dashboard():
     
     try:
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor(dictionary=True)
         
         cursor.execute("SELECT * FROM users WHERE id = %s", (session['user_id'],))
@@ -168,6 +181,8 @@ def post_request():
     try:
         print(f"DEBUG POST: User={session['user_id']}, BG={bg}, City={ct}, Hosp={hosp}, Urg={urg}")
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor()
         cursor.execute("""
             INSERT INTO blood_requests (requester_id, required_blood_group, city, hospital_name, urgency_level, description) 
@@ -190,6 +205,8 @@ def toggle_availability():
     try:
         user_id = session['user_id']
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor()
         cursor.execute("UPDATE users SET is_available = NOT is_available WHERE id = %s", (user_id,))
         db.commit()
@@ -207,6 +224,8 @@ def delete_request(req_id):
     
     try:
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor(dictionary=True)
         # Check ownership
         cursor.execute("SELECT * FROM blood_requests WHERE id = %s", (req_id,))
@@ -235,6 +254,8 @@ def search():
     
     try:
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor(dictionary=True)
         
         query = "SELECT * FROM users WHERE role = 'donor' AND is_available = 1"
@@ -271,6 +292,8 @@ def send_message():
         content = data.get('content')
         
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor()
         cursor.execute("INSERT INTO messages (sender_id, receiver_id, content) VALUES (%s, %s, %s)",
                        (session['user_id'], receiver_id, content))
@@ -287,6 +310,8 @@ def get_messages(partner_id):
     
     try:
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor(dictionary=True)
         cursor.execute("""
             SELECT * FROM messages 
@@ -320,6 +345,8 @@ def my_conversations():
     try:
         user_id = session['user_id']
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor(dictionary=True)
         
         query = """
@@ -344,6 +371,8 @@ def delete_conversation(partner_id):
     try:
         my_id = session['user_id']
         db = get_db()
+        if not db:
+            raise Exception("Database connection failed")
         cursor = db.cursor()
         cursor.execute("DELETE FROM messages WHERE (sender_id = %s AND receiver_id = %s) OR (sender_id = %s AND receiver_id = %s)",
                        (my_id, partner_id, partner_id, my_id))
