@@ -9,7 +9,8 @@ db_config = {
 
 def init_db():
     try:
-        # Connect to server first to create DB if not exists
+        # 1. Connect to MySQL Server
+        print(f"Connecting to MySQL host: {db_config['host']}...")
         conn = mysql.connector.connect(
             host=db_config['host'],
             user=db_config['user'],
@@ -17,6 +18,15 @@ def init_db():
         )
         cursor = conn.cursor()
         
+        # 2. Create/Select Database dynamically
+        target_db = db_config['database']
+        print(f"Initializing database: {target_db}")
+        
+        # Create DB if it doesn't exist (safe for local & cloud)
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {target_db}")
+        cursor.execute(f"USE {target_db}")
+        
+        # 3. Read and execute schema
         with open('schema.sql', 'r') as f:
             schema = f.read()
             

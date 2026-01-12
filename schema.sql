@@ -1,6 +1,6 @@
 -- BloodBridge Database Schema
-CREATE DATABASE IF NOT EXISTS bloodbridge_db;
-USE bloodbridge_db;
+-- Database creation is now handled by init_db.py using environment variables
+
 
 -- Users Table
 CREATE TABLE IF NOT EXISTS users (
